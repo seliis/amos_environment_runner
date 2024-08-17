@@ -2,17 +2,17 @@
     "environments": [
         {
             "title": "Production",
-            "directory": "c:/amos/production",
+            "directory": "c:/amos/application/production",
             "executable": "start.bat"
         },
         {
             "title": "Training",
-            "directory": "c:/amos/training",
+            "directory": "c:/amos/application/training",
             "executable": "start.bat"
         },
         {
             "title": "Acceptance",
-            "directory": "c:/amos/acceptance",
+            "directory": "c:/amos/application/acceptance",
             "executable": "start.bat"
         }
     ]
