@@ -16,7 +16,7 @@ void main() async {
 
   windowManager.waitUntilReadyToShow(
     WindowOptions(
-      title: "${packageInfo.appName.toUpperCase()} v${packageInfo.version}",
+      title: "AMOS Environment Runner v${packageInfo.version}",
       minimumSize: size,
       maximumSize: size,
       alwaysOnTop: true,

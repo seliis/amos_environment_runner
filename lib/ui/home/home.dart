@@ -13,7 +13,7 @@ final class Home extends StatelessWidget {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
         child: BlocBuilder<infra.ConfigurationImporter, infra.ConfigurationImporterState>(
           builder: (_, state) {
             if (state is infra.ConfigurationImporterSuccess) {
@@ -40,7 +40,13 @@ final class Home extends StatelessWidget {
 
             if (state is infra.ConfigurationImporterFailure) {
               return Center(
-                child: Text(state.error.toString()),
+                child: Text(
+                  state.error.toString(),
+                  textAlign: TextAlign.justify,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w100,
+                  ),
+                ),
               );
             }
 
@@ -51,11 +57,17 @@ final class Home extends StatelessWidget {
             }
 
             return const Center(
-              child: Text("State of ConfigurationImporter is Initial"),
+              child: Text(
+                "State of ConfigurationImporter is Initial",
+                style: TextStyle(
+                  fontWeight: FontWeight.w100,
+                ),
+              ),
             );
           },
         ),
       ),
+      bottomNavigationBar: const _Footer(),
     );
   }
 }
@@ -183,6 +195,7 @@ final class _ExecuteButton extends StatelessWidget {
     return BlocBuilder<usecase.EnvironmentRunner, usecase.RunnerState>(
       builder: (_, state) {
         return SizedBox(
+          height: 48,
           width: double.infinity,
           child: FilledButton(
             onPressed: state is usecase.RunnerPrepare
@@ -206,6 +219,28 @@ final class _ExecuteButton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+final class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 4,
+      ),
+      child: Text(
+        "Developed by In Son © 2024 Aero K Airlines Ltd. Licensed under the MIT License.",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Theme.of(context).disabledColor,
+          fontWeight: FontWeight.w100,
+          fontSize: 10,
+        ),
+      ),
     );
   }
 }
