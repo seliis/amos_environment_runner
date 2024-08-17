@@ -7,22 +7,12 @@
         },
         {
             "title": "Training",
-            "directory": "c:/amos/trainin",
+            "directory": "c:/amos/training",
             "executable": "start.bat"
         },
         {
             "title": "Acceptance",
             "directory": "c:/amos/acceptance",
-            "executable": "start.bat"
-        },
-        {
-            "title": "Migration1",
-            "directory": "c:/amos/migration1",
-            "executable": "start.bat"
-        },
-        {
-            "title": "Migration2",
-            "directory": "c:/amos/migration2",
             "executable": "start.bat"
         }
     ]
