@@ -1,9 +1,11 @@
 import "package:package_info_plus/package_info_plus.dart";
 import "package:window_manager/window_manager.dart";
-import "package:flutter_dotenv/flutter_dotenv.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter/material.dart";
 
-import "package:koreugi/ui/.index.dart" as ui;
+import "package:amos_environment_runner/usecase/.index.dart" as usecase;
+import "package:amos_environment_runner/infra/.index.dart" as infra;
+import "package:amos_environment_runner/ui/.index.dart" as ui;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,9 +29,35 @@ void main() async {
     },
   );
 
-  await dotenv.load(fileName: "assets/.env");
+  runApp(
+    const DependencyInjector(
+      child: App(),
+    ),
+  );
+}
 
-  runApp(const App());
+final class DependencyInjector extends StatelessWidget {
+  const DependencyInjector({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => infra.ConfigurationImporter()..import(),
+        ),
+        BlocProvider(
+          create: (_) => usecase.EnvironmentRunner(),
+        ),
+      ],
+      child: const App(),
+    );
+  }
 }
 
 final class App extends StatelessWidget {

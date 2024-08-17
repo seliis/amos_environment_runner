@@ -1,7 +1,7 @@
 publish_to: none
-version: 0.0.1
+version: 0.0.2
 
-name: koreugi
+name: amos_environment_runner
 description: none
 
 environment:
@@ -13,6 +13,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   window_manager: ^0.4.0
   package_info_plus: ^8.0.0
+  flutter_bloc: ^8.1.6
 
 dev_dependencies:
   flutter_test:
@@ -23,4 +24,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/.env
+    - assets/config.json
+
+  fonts:
+  - family: Cascadia Code
+    fonts:
+      - asset: assets/CascadiaCode-ExtraLight.ttf
+        weight: 200

@@ -1,7 +1,9 @@
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter/material.dart";
 
-import "package:koreugi/usecase/.index.dart" as usecase;
-import "package:koreugi/domain/.index.dart" as domain;
+import "package:amos_environment_runner/usecase/.index.dart" as usecase;
+import "package:amos_environment_runner/entity/.index.dart" as entity;
+import "package:amos_environment_runner/infra/.index.dart" as infra;
 
 final class Home extends StatelessWidget {
   const Home({super.key});
@@ -9,201 +11,201 @@ final class Home extends StatelessWidget {
   @override
   Widget build(context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: _Buttons(),
-          ),
-          const _Footer(),
-        ],
+      body: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        child: BlocBuilder<infra.ConfigurationImporter, infra.ConfigurationImporterState>(
+          builder: (_, state) {
+            if (state is infra.ConfigurationImporterSuccess) {
+              context.read<usecase.EnvironmentRunner>().pick(state.config.environments.first);
+
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _DropdownMenu(
+                    config: state.config,
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  const _StatusWindow(),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  const _ExecuteButton(),
+                ],
+              );
+            }
+
+            if (state is infra.ConfigurationImporterFailure) {
+              return Center(
+                child: Text(state.error.toString()),
+              );
+            }
+
+            if (state is infra.ConfigurationImporterLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            return const Center(
+              child: Text("State of ConfigurationImporter is Initial"),
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-final class _Buttons extends StatefulWidget {
-  _Buttons();
+final class _DropdownMenu extends StatelessWidget {
+  const _DropdownMenu({
+    required this.config,
+  });
 
-  final List<domain.BootButton> data = [
-    const domain.BootButton(
-      title: "Acceptance",
-      color: Colors.redAccent,
-    ),
-    const domain.BootButton(
-      title: "Training",
-      color: Colors.yellowAccent,
-    ),
-    const domain.BootButton(
-      title: "Production",
-      color: Colors.tealAccent,
-    ),
-  ];
-
-  @override
-  _ButtonsState createState() => _ButtonsState();
-}
-
-final class _ButtonsState extends State<_Buttons> {
-  bool isLoading = false;
+  final entity.Configuration config;
 
   @override
   Widget build(context) {
-    final Size size = MediaQuery.of(context).size;
+    return BlocBuilder<usecase.EnvironmentRunner, usecase.RunnerState>(
+      builder: (_, state) {
+        return DropdownMenu<entity.Environment>(
+          enabled: state is! usecase.RunnerLoading,
+          label: const Text("Environment"),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w100,
+          ),
+          initialSelection: config.environments.first,
+          dropdownMenuEntries: config.environments
+              .map(
+                (environment) => DropdownMenuEntry<entity.Environment>(
+                  label: environment.title,
+                  value: environment,
+                ),
+              )
+              .toList(),
+          onSelected: (value) {
+            if (value != null) {
+              context.read<usecase.EnvironmentRunner>().pick(value);
+            }
+          },
+          expandedInsets: const EdgeInsets.all(0),
+        );
+      },
+    );
+  }
+}
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-      ),
-      child: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+final class _StatusWindow extends StatelessWidget {
+  const _StatusWindow();
+
+  @override
+  Widget build(context) {
+    return BlocBuilder<usecase.EnvironmentRunner, usecase.RunnerState>(
+      builder: (_, state) {
+        Text getInfo() {
+          const style = TextStyle(
+            fontFamily: "Cascadia Code",
+            fontWeight: FontWeight.w100,
+          );
+
+          if (state is usecase.RunnerPrepare) {
+            return Text(
+              "${state.directory}/${state.executable}",
+              style: style,
+            );
+          }
+
+          if (state is usecase.RunnerLoading) {
+            return const Text(
+              "Loading...",
+              style: style,
+            );
+          }
+
+          if (state is usecase.RunnerFailure) {
+            return Text(
+              state.message,
+              style: style,
+            );
+          }
+
+          if (state is usecase.RunnerSuccess) {
+            return const Text(
+              "Execution Success",
+              style: style,
+            );
+          }
+
+          return const Text(
+            "No Target Selected",
+            style: TextStyle(
+              fontFamily: "Cascadia Code",
+              fontWeight: FontWeight.w100,
+            ),
+          );
+        }
+
+        return Expanded(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(4, 0, 0, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final domain.BootButton item in widget.data)
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(2, 16, 2, 0),
-                      height: size.height,
-                      child: _Button(
-                        data: item,
-                        onPressed: () async {
-                          setState(() {
-                            isLoading = true;
-                          });
-                          final result = await usecase.execute(item.title);
-                          if (context.mounted) {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(
-                                builder: (context) => _Terminus(
-                                  message: result,
-                                ),
-                              ),
-                            ).then((_) {
-                              setState(() {
-                                isLoading = false;
-                              });
-                            });
-                          }
-                        },
-                      ),
-                    ),
+                Text(
+                  "Status Window",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
+                ),
+                const SizedBox(
+                  height: 4,
+                ),
+                getInfo(),
               ],
             ),
-    );
-  }
-}
-
-final class _Button extends StatefulWidget {
-  _Button({
-    required this.data,
-    required this.onPressed,
-  });
-
-  final domain.BootButton data;
-  final VoidCallback onPressed;
-  final Color baseColor = Colors.grey.shade900;
-  final Color textColor = Colors.grey;
-
-  @override
-  _ButtonState createState() => _ButtonState();
-}
-
-final class _ButtonState extends State<_Button> {
-  late Color baseColor = baseColor;
-  late Color textColor = textColor;
-
-  @override
-  void initState() {
-    super.initState();
-    baseColor = widget.baseColor;
-    textColor = widget.textColor;
-  }
-
-  @override
-  Widget build(context) {
-    return FilledButton(
-      onPressed: widget.onPressed,
-      onHover: (bool value) {
-        setState(() {
-          baseColor = value ? widget.data.color : widget.baseColor;
-          textColor = value ? Colors.black : widget.textColor;
-        });
-      },
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(
-          widget.baseColor,
-        ),
-        overlayColor: WidgetStatePropertyAll(
-          baseColor,
-        ),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-      ),
-      child: Text(
-        widget.data.title,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 16,
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-final class _Terminus extends StatelessWidget {
-  const _Terminus({
-    required this.message,
-  });
-
-  final String message;
+final class _ExecuteButton extends StatelessWidget {
+  const _ExecuteButton();
 
   @override
   Widget build(context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(message),
-            const SizedBox(
-              height: 16,
-            ),
-            SizedBox(
-              width: 128,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("Back"),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-final class _Footer extends StatelessWidget {
-  const _Footer();
-
-  @override
-  Widget build(context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-      child: Text(
-        "Developed by In Son",
-        style: TextStyle(
-          color: Colors.grey,
-          fontSize: 12,
-        ),
-      ),
+    return BlocBuilder<usecase.EnvironmentRunner, usecase.RunnerState>(
+      builder: (_, state) {
+        return SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: state is usecase.RunnerPrepare
+                ? () {
+                    context.read<usecase.EnvironmentRunner>().execute(
+                          "${state.directory}/${state.executable}",
+                        );
+                  }
+                : null,
+            child: state is usecase.RunnerLoading
+                ? Transform.scale(
+                    scale: 0.5,
+                    child: const CircularProgressIndicator(),
+                  )
+                : const Text(
+                    "Execute",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }
