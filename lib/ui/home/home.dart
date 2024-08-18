@@ -1,3 +1,5 @@
+import "dart:io" as io;
+
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter/material.dart";
 
@@ -95,6 +97,13 @@ final class _DropdownMenu extends StatelessWidget {
                 (environment) => DropdownMenuEntry<entity.Environment>(
                   label: environment.title,
                   value: environment,
+                  style: const ButtonStyle(
+                    textStyle: WidgetStatePropertyAll(
+                      TextStyle(
+                        fontWeight: FontWeight.w100,
+                      ),
+                    ),
+                  ),
                 ),
               )
               .toList(),
@@ -132,7 +141,7 @@ final class _StatusWindow extends StatelessWidget {
 
           if (state is usecase.RunnerLoading) {
             return const Text(
-              "Loading...",
+              "Now Starting...",
               style: style,
             );
           }
@@ -140,13 +149,14 @@ final class _StatusWindow extends StatelessWidget {
           if (state is usecase.RunnerFailure) {
             return Text(
               state.message,
+              overflow: TextOverflow.ellipsis,
               style: style,
             );
           }
 
           if (state is usecase.RunnerSuccess) {
             return const Text(
-              "Execution Success",
+              "Executed Successfully",
               style: style,
             );
           }
@@ -167,15 +177,21 @@ final class _StatusWindow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Status Window",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      "Current Status Window",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    const _DismissSetting(),
+                  ],
                 ),
                 const SizedBox(
-                  height: 4,
+                  height: 16,
                 ),
                 getInfo(),
               ],
@@ -187,6 +203,47 @@ final class _StatusWindow extends StatelessWidget {
   }
 }
 
+final class _DismissSetting extends StatelessWidget {
+  const _DismissSetting();
+
+  @override
+  Widget build(context) {
+    return Row(
+      children: [
+        Text(
+          "Do you want exit after execution?",
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.secondary,
+            fontWeight: FontWeight.w100,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(
+          width: 8,
+        ),
+        Transform.scale(
+          scale: 0.75,
+          child: Align(
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: 40,
+              height: 8,
+              child: Switch(
+                value: context.watch<usecase.DismissSetting>().state,
+                onChanged: context.watch<usecase.EnvironmentRunner>().state is! usecase.RunnerLoading
+                    ? (value) {
+                        context.read<usecase.DismissSetting>().set(value);
+                      }
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 final class _ExecuteButton extends StatelessWidget {
   const _ExecuteButton();
 
@@ -194,17 +251,29 @@ final class _ExecuteButton extends StatelessWidget {
   Widget build(context) {
     return BlocBuilder<usecase.EnvironmentRunner, usecase.RunnerState>(
       builder: (_, state) {
+        Future<void> execute() async {
+          if (state is usecase.RunnerPrepare) {
+            await context
+                .read<usecase.EnvironmentRunner>()
+                .execute(
+                  "${state.directory}/${state.executable}",
+                )
+                .then(
+              (_) {
+                if (context.mounted) {
+                  final isSuccess = context.read<usecase.EnvironmentRunner>().state is usecase.RunnerSuccess;
+                  if (isSuccess && context.read<usecase.DismissSetting>().state) io.exit(0);
+                }
+              },
+            );
+          }
+        }
+
         return SizedBox(
           height: 48,
           width: double.infinity,
           child: FilledButton(
-            onPressed: state is usecase.RunnerPrepare
-                ? () {
-                    context.read<usecase.EnvironmentRunner>().execute(
-                          "${state.directory}/${state.executable}",
-                        );
-                  }
-                : null,
+            onPressed: state is usecase.RunnerPrepare ? execute : null,
             child: state is usecase.RunnerLoading
                 ? Transform.scale(
                     scale: 0.5,

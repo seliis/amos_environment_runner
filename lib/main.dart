@@ -52,6 +52,9 @@ final class DependencyInjector extends StatelessWidget {
           create: (_) => infra.ConfigurationImporter()..import(),
         ),
         BlocProvider(
+          create: (_) => usecase.DismissSetting()..init(),
+        ),
+        BlocProvider(
           create: (_) => usecase.EnvironmentRunner(),
         ),
       ],

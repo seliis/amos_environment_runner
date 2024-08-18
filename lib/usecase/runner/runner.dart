@@ -14,7 +14,7 @@ final class EnvironmentRunner extends Cubit<RunnerState> {
     ));
   }
 
-  void execute(String target) async {
+  Future<void> execute(String target) async {
     emit(RunnerLoading());
 
     try {
